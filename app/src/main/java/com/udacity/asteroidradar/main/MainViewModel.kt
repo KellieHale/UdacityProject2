@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.Constants
 import com.udacity.asteroidradar.api.NetworkHelper
+import com.udacity.asteroidradar.api.getNextSevenDaysFormattedDates
 import com.udacity.asteroidradar.api.parseAsteroidsJsonResult
 import okhttp3.ResponseBody
 import org.json.JSONObject
@@ -19,9 +20,9 @@ class MainViewModel : ViewModel() {
     val asteroids: LiveData<List<Asteroid>>
         get() = _asteroids
 
-
     fun getAsteroids() {
-        NetworkHelper.retrofitService.getAsteroid("2023-03-07", "2023-03-08", Constants.API_KEY).enqueue( object:
+        val dates = getNextSevenDaysFormattedDates()
+        NetworkHelper.retrofitService.getAsteroid(dates[0], dates[dates.size - 1], Constants.API_KEY).enqueue( object:
             Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 response.body()?.let {
