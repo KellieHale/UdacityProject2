@@ -5,14 +5,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.Constants
+import com.udacity.asteroidradar.PictureOfDayInterface
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
+import retrofit2.*
 import retrofit2.converter.scalars.ScalarsConverterFactory
 
 class NetworkHelper {
@@ -22,6 +20,7 @@ class NetworkHelper {
         private val client: OkHttpClient
         private val retrofit: Retrofit
         val retrofitService: NasaApiService
+        val retrofitServ: PictureOfDayInterface
 
         init {
             interceptor.level = HttpLoggingInterceptor.Level.BODY
@@ -34,6 +33,7 @@ class NetworkHelper {
                 .baseUrl(Constants.BASE_URL)
                 .build()
             retrofitService = retrofit.create(NasaApiService::class.java)
+            retrofitServ = retrofit.create(PictureOfDayInterface::class.java)
         }
     }
 }
