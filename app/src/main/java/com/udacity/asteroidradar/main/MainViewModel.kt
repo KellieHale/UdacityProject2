@@ -9,7 +9,6 @@ import com.udacity.asteroidradar.PictureOfDay
 import com.udacity.asteroidradar.api.NetworkHelper
 import com.udacity.asteroidradar.api.getNextSevenDaysFormattedDates
 import com.udacity.asteroidradar.api.parseAsteroidsJsonResult
-import com.udacity.asteroidradar.PictureOfDayInterface
 import com.udacity.asteroidradar.api.parsePictureOfTheDayResult
 import okhttp3.ResponseBody
 import org.json.JSONObject
@@ -29,7 +28,7 @@ class MainViewModel : ViewModel() {
 
     fun getAsteroids() {
         val dates = getNextSevenDaysFormattedDates()
-        NetworkHelper.retrofitService.getAsteroid(dates[0], dates[dates.size - 1], Constants.API_KEY).enqueue( object:
+        NetworkHelper.nasaApiService.getAsteroid(dates[0], dates[dates.size - 1], Constants.API_KEY).enqueue( object:
             Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 response.body()?.let {
@@ -45,7 +44,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun getPictureOfDay() {
-        NetworkHelper.retrofitServ.getPicture(Constants.API_KEY).enqueue( object:
+        NetworkHelper.pictureOfDayService.getPicture(Constants.API_KEY).enqueue( object:
             Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 response.body()?.let {
