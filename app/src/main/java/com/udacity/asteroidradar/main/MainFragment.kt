@@ -38,6 +38,7 @@ class MainFragment : Fragment() {
             Picasso
                 .with(requireContext())
                 .load(photoOfDay.imgSrcUrl)
+                .placeholder(R.drawable.placeholder_picture_of_day)
                 .into(binding.activityMainImageOfTheDay)
         }
         mainViewModel.getAsteroids()

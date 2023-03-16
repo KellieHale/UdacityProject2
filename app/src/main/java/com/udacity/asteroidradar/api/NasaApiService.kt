@@ -13,5 +13,4 @@ interface NasaApiService {
         @Query("end_date") endDate: String,
         @Query("api_key") apiKey: String
     ): Call<ResponseBody>
-
 }
