@@ -1,31 +1,18 @@
 package com.udacity.asteroidradar.room
 
-import android.content.Context
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.udacity.asteroidradar.Asteroid
 
 @Dao
 interface AsteroidDao {
-    @Query("select * from asteroiddata")
-    fun getData(): LiveData<List<Asteroid>>
 
-}
-@Database(entities = [AsteroidData::class], version = 1, exportSchema = false)
-abstract class AsteroidDatabase : RoomDatabase() {
-    abstract val asteroidDao: AsteroidDao
-}
-//
-//private lateinit var INSTANCE: AsteroidDatabase
+    //-- SELECT * FROM asteroid WHERE closeApproachDate >= TODAY
+    @Query("SELECT * FROM asteroid")
+    suspend fun getAsteroids(): List<Asteroid>
 
-//fun getDatabase(context: Context): AsteroidDatabase {
-//    synchronized(AsteroidDatabase::class.java) {
-//        if (!::INSTANCE.isInitialized) {
-//            INSTANCE = Room.databaseBuilder(context.applicationContext,
-//            AsteroidDatabase::class.java,
-//            "asteroids")
-//                .build()
-//        }
-//    }
-//    return INSTANCE
-//}
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAsteroid(asteroid: Asteroid)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllAsteroids(asteroids: List<Asteroid>)
+}

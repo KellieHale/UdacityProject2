@@ -14,6 +14,9 @@ import com.squareup.picasso.Picasso
 import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.R
 import com.udacity.asteroidradar.databinding.FragmentMainBinding
+import com.udacity.asteroidradar.room.AsteroidDatabase
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 
 class MainFragment : Fragment() {
 
@@ -23,31 +26,17 @@ class MainFragment : Fragment() {
         ViewModelProvider(this)[MainViewModel::class.java]
     }
 
+    private lateinit var binding: FragmentMainBinding
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
-        val binding = FragmentMainBinding.inflate(inflater)
+        binding = FragmentMainBinding.inflate(inflater)
         binding.lifecycleOwner = this
-
         binding.viewModel = viewModel
-
-        val mainViewModel = MainViewModel()
-        mainViewModel.asteroids.observe(viewLifecycleOwner) { asteroids ->
-            adapter.setAsteroids(asteroids)
-        }
-        mainViewModel.photo.observe(viewLifecycleOwner) { photoOfDay ->
-            Picasso
-                .with(requireContext())
-                .load(photoOfDay.imgSrcUrl)
-                .into(binding.activityMainImageOfTheDay)
-        }
-        mainViewModel.getAsteroids()
-        mainViewModel.getPictureOfDay()
-
-
         setHasOptionsMenu(true)
-
         return binding.root
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView: RecyclerView = view.findViewById(R.id.asteroid_recycler)
@@ -58,6 +47,38 @@ class MainFragment : Fragment() {
         recyclerView.adapter = adapter
         addDivider(recyclerView)
     }
+
+    override fun onResume() {
+        super.onResume()
+
+        //-- TODO Move to ViewModel
+        viewModel.asteroids.observe(viewLifecycleOwner) { asteroids ->
+            GlobalScope.async {
+                val asteroidsDb = AsteroidDatabase.getInstance(requireContext())
+                asteroidsDb.asteroidDao().insertAllAsteroids(asteroids)
+                updateAsteroidsAdapter()
+            }
+        }
+        viewModel.photo.observe(viewLifecycleOwner) { photoOfDay ->
+            Picasso
+                .with(requireContext())
+                .load(photoOfDay.imgSrcUrl)
+                .into(binding.activityMainImageOfTheDay)
+        }
+        viewModel.getAsteroids()
+        viewModel.getPictureOfDay()
+        //-- END TODO
+        updateAsteroidsAdapter()
+    }
+
+    private fun updateAsteroidsAdapter() {
+        GlobalScope.async {
+            val asteroidsDb = AsteroidDatabase.getInstance(requireContext())
+            val asteroids = asteroidsDb.asteroidDao().getAsteroids()
+            adapter.setAsteroids(asteroids)
+        }
+    }
+
     private fun addDivider(recyclerView: RecyclerView) {
         val verticalDecoration = DividerItemDecoration(
             requireContext(),
@@ -70,7 +91,7 @@ class MainFragment : Fragment() {
     }
 
     private fun viewAsteroid(asteroid: Asteroid) {
-        val bundle = bundleOf("asteroid" to asteroid )
+        val bundle = bundleOf("selectedAsteroid" to asteroid )
         findNavController().navigate(R.id.action_showDetail, bundle)
     }
 
