@@ -6,7 +6,6 @@ import com.udacity.asteroidradar.PictureOfDay
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 fun parsePictureOfTheDayResult(jsonResult: JSONObject): PictureOfDay {
     val mediaType = jsonResult.getString("media_type")
@@ -49,11 +48,9 @@ fun parseAsteroidsJsonResult(jsonResult: JSONObject): ArrayList<Asteroid> {
                 val asteroid = Asteroid(id, codename, formattedDate, absoluteMagnitude,
                     estimatedDiameter, relativeVelocity, distanceFromEarth, isPotentiallyHazardous)
                 asteroidList.add(asteroid)
-
             }
         }
     }
-
     return asteroidList
 }
 

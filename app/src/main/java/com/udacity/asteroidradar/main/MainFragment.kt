@@ -10,10 +10,14 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.squareup.picasso.Picasso
 import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.R
 import com.udacity.asteroidradar.databinding.FragmentMainBinding
+import com.udacity.asteroidradar.work.RefreshDataWorker
+import kotlinx.coroutines.*
 
 class MainFragment : Fragment() {
 
@@ -23,31 +27,18 @@ class MainFragment : Fragment() {
         ViewModelProvider(this)[MainViewModel::class.java]
     }
 
+    private lateinit var binding: FragmentMainBinding
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
-        val binding = FragmentMainBinding.inflate(inflater)
-        binding.lifecycleOwner = this
-
+        binding = FragmentMainBinding.inflate(inflater)
+        binding.lifecycleOwner = viewLifecycleOwner
         binding.viewModel = viewModel
 
-        val mainViewModel = MainViewModel()
-        mainViewModel.asteroids.observe(viewLifecycleOwner) { asteroids ->
-            adapter.setAsteroids(asteroids)
-        }
-        mainViewModel.photo.observe(viewLifecycleOwner) { photoOfDay ->
-            Picasso
-                .with(requireContext())
-                .load(photoOfDay.imgSrcUrl)
-                .into(binding.activityMainImageOfTheDay)
-        }
-        mainViewModel.getAsteroids()
-        mainViewModel.getPictureOfDay()
-
-
         setHasOptionsMenu(true)
-
         return binding.root
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView: RecyclerView = view.findViewById(R.id.asteroid_recycler)
@@ -58,11 +49,36 @@ class MainFragment : Fragment() {
         recyclerView.adapter = adapter
         addDivider(recyclerView)
     }
+
+    override fun onResume() {
+        super.onResume()
+
+        viewModel.asteroids.observe(viewLifecycleOwner) { asteroids ->
+            adapter.setAsteroids(asteroids)
+        }
+        viewModel.photo.observe(viewLifecycleOwner) { photoOfDay ->
+            Picasso
+                .with(requireContext())
+                .load(photoOfDay.imgSrcUrl)
+                .into(binding.activityMainImageOfTheDay)
+        }
+        viewModel.updateUi(requireContext())
+
+        WorkManager.getInstance(requireContext().applicationContext)
+            .getWorkInfosForUniqueWorkLiveData(RefreshDataWorker.WORK_NAME).observe(viewLifecycleOwner) { infos ->
+                if (infos.size > 0) {
+                    val state = infos[0].state
+                    if (state == WorkInfo.State.ENQUEUED) {
+                        viewModel.getFilteredAsteroids(requireContext())
+                    }
+                }
+            }
+    }
+
     private fun addDivider(recyclerView: RecyclerView) {
         val verticalDecoration = DividerItemDecoration(
             requireContext(),
-            DividerItemDecoration.VERTICAL
-        )
+            DividerItemDecoration.VERTICAL)
         val verticalDivider =
             ContextCompat.getDrawable(requireActivity(), R.drawable.vertical_divider)
         verticalDecoration.setDrawable(verticalDivider!!)
@@ -70,7 +86,7 @@ class MainFragment : Fragment() {
     }
 
     private fun viewAsteroid(asteroid: Asteroid) {
-        val bundle = bundleOf("asteroid" to asteroid )
+        val bundle = bundleOf("selectedAsteroid" to asteroid )
         findNavController().navigate(R.id.action_showDetail, bundle)
     }
 
@@ -82,8 +98,13 @@ class MainFragment : Fragment() {
 
     @Deprecated("Deprecated in Java", ReplaceWith("true"))
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        viewModel.updateFilter(
+            when (item.itemId){
+                R.id.show_all_menu -> AsteroidApiFilter.SHOW_SAVED
+                R.id.show_week_menu -> AsteroidApiFilter.SHOW_WEEK
+                else -> AsteroidApiFilter.SHOW_TODAY
+            })
+        viewModel.getFilteredAsteroids(requireContext())
         return true
     }
-
-
 }
