@@ -35,6 +35,7 @@ class MainViewModel : ViewModel() {
                     val jsonObject = JSONObject(it.string())
                     val asteroids = parseAsteroidsJsonResult(jsonObject)
                     _asteroids.value = asteroids
+
                 }
             }
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {

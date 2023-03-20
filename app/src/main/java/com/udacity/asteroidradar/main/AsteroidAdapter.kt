@@ -37,7 +37,6 @@ class AsteroidAdapter(val onItemClicked: (Asteroid) -> Unit): RecyclerView.Adapt
     override fun getItemCount(): Int {
         return asteroids.size
     }
-
     fun setAsteroids(asteroids: List<Asteroid>) {
         this.asteroids = asteroids
         notifyDataSetChanged()

@@ -7,9 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.R
 import com.udacity.asteroidradar.databinding.FragmentDetailBinding
 
@@ -18,7 +15,7 @@ class DetailFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         val binding = FragmentDetailBinding.inflate(inflater)
-        binding.lifecycleOwner = this
+        binding.lifecycleOwner = viewLifecycleOwner
 
         val asteroid = DetailFragmentArgs.fromBundle(requireArguments()).selectedAsteroid
 
@@ -27,7 +24,6 @@ class DetailFragment : Fragment() {
         binding.helpButton.setOnClickListener {
             displayAstronomicalUnitExplanationDialog()
         }
-
         return binding.root
     }
 
@@ -37,4 +33,10 @@ class DetailFragment : Fragment() {
             .setPositiveButton(android.R.string.ok, null)
         builder.create().show()
     }
+//    fun displayIsHazardous(asteroid: Asteroid){
+//        when (asteroid.isPotentiallyHazardous) {
+//            true -> R.drawable.asteroid_hazardous
+//            false -> R.drawable.asteroid_safe
+//        }
+//    }
 }

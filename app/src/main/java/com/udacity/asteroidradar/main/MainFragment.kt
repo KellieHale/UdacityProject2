@@ -15,8 +15,7 @@ import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.R
 import com.udacity.asteroidradar.databinding.FragmentMainBinding
 import com.udacity.asteroidradar.room.AsteroidDatabase
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 
 class MainFragment : Fragment() {
 
@@ -31,8 +30,9 @@ class MainFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         binding = FragmentMainBinding.inflate(inflater)
-        binding.lifecycleOwner = this
+        binding.lifecycleOwner = viewLifecycleOwner
         binding.viewModel = viewModel
+
         setHasOptionsMenu(true)
         return binding.root
     }
@@ -51,9 +51,9 @@ class MainFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        //-- TODO Move to ViewModel
+//        //-- TODO Move to ViewModel
         viewModel.asteroids.observe(viewLifecycleOwner) { asteroids ->
-            GlobalScope.async {
+            GlobalScope.launch(Dispatchers.IO) {
                 val asteroidsDb = AsteroidDatabase.getInstance(requireContext())
                 asteroidsDb.asteroidDao().insertAllAsteroids(asteroids)
                 updateAsteroidsAdapter()
@@ -71,19 +71,21 @@ class MainFragment : Fragment() {
         updateAsteroidsAdapter()
     }
 
+
     private fun updateAsteroidsAdapter() {
-        GlobalScope.async {
+        GlobalScope.launch(Dispatchers.IO) {
             val asteroidsDb = AsteroidDatabase.getInstance(requireContext())
-            val asteroids = asteroidsDb.asteroidDao().getAsteroids()
-            adapter.setAsteroids(asteroids)
+            val asteroids = withContext(Dispatchers.Default) {
+                asteroidsDb.asteroidDao().getAsteroids()
+            }
+            launch(Dispatchers.Main) { adapter.setAsteroids(asteroids) }
         }
     }
 
     private fun addDivider(recyclerView: RecyclerView) {
         val verticalDecoration = DividerItemDecoration(
             requireContext(),
-            DividerItemDecoration.VERTICAL
-        )
+            DividerItemDecoration.VERTICAL)
         val verticalDivider =
             ContextCompat.getDrawable(requireActivity(), R.drawable.vertical_divider)
         verticalDecoration.setDrawable(verticalDivider!!)

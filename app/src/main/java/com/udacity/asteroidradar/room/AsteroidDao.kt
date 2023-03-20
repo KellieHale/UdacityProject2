@@ -1,12 +1,15 @@
 package com.udacity.asteroidradar.room
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.udacity.asteroidradar.Asteroid
 
 @Dao
 interface AsteroidDao {
 
-    //-- SELECT * FROM asteroid WHERE closeApproachDate >= TODAY
+    //-- SELECT * FROM asteroid WHERE closeApproachDate = TODAY
     @Query("SELECT * FROM asteroid")
     suspend fun getAsteroids(): List<Asteroid>
 
@@ -15,4 +18,9 @@ interface AsteroidDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllAsteroids(asteroids: List<Asteroid>)
+
+    //-- REMOVE * FROM asteroid WHERE closeApproachDate < TODAY
+    //-- @Delete
+    //-- suspendFun deleteAllAsteroidsBeforeToday(date: Date)
+
 }
