@@ -10,11 +10,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.squareup.picasso.Picasso
 import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.R
 import com.udacity.asteroidradar.databinding.FragmentMainBinding
-import com.udacity.asteroidradar.room.AsteroidDatabase
+import com.udacity.asteroidradar.work.RefreshDataWorker
 import kotlinx.coroutines.*
 
 class MainFragment : Fragment() {
@@ -51,13 +53,8 @@ class MainFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-//        //-- TODO Move to ViewModel
         viewModel.asteroids.observe(viewLifecycleOwner) { asteroids ->
-            GlobalScope.launch(Dispatchers.IO) {
-                val asteroidsDb = AsteroidDatabase.getInstance(requireContext())
-                asteroidsDb.asteroidDao().insertAllAsteroids(asteroids)
-                updateAsteroidsAdapter()
-            }
+            adapter.setAsteroids(asteroids)
         }
         viewModel.photo.observe(viewLifecycleOwner) { photoOfDay ->
             Picasso
@@ -65,21 +62,17 @@ class MainFragment : Fragment() {
                 .load(photoOfDay.imgSrcUrl)
                 .into(binding.activityMainImageOfTheDay)
         }
-        viewModel.getAsteroids()
-        viewModel.getPictureOfDay()
-        //-- END TODO
-        updateAsteroidsAdapter()
-    }
+        viewModel.updateUi(requireContext())
 
-
-    private fun updateAsteroidsAdapter() {
-        GlobalScope.launch(Dispatchers.IO) {
-            val asteroidsDb = AsteroidDatabase.getInstance(requireContext())
-            val asteroids = withContext(Dispatchers.Default) {
-                asteroidsDb.asteroidDao().getAsteroids()
+        WorkManager.getInstance(requireContext().applicationContext)
+            .getWorkInfosForUniqueWorkLiveData(RefreshDataWorker.WORK_NAME).observe(viewLifecycleOwner) { infos ->
+                if (infos.size > 0) {
+                    val state = infos[0].state
+                    if (state == WorkInfo.State.ENQUEUED) {
+                        viewModel.getFilteredAsteroids(requireContext())
+                    }
+                }
             }
-            launch(Dispatchers.Main) { adapter.setAsteroids(asteroids) }
-        }
     }
 
     private fun addDivider(recyclerView: RecyclerView) {
@@ -105,8 +98,13 @@ class MainFragment : Fragment() {
 
     @Deprecated("Deprecated in Java", ReplaceWith("true"))
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        viewModel.updateFilter(
+            when (item.itemId){
+                R.id.show_all_menu -> AsteroidApiFilter.SHOW_SAVED
+                R.id.show_week_menu -> AsteroidApiFilter.SHOW_WEEK
+                else -> AsteroidApiFilter.SHOW_TODAY
+            })
+        viewModel.getFilteredAsteroids(requireContext())
         return true
     }
-
-
 }
