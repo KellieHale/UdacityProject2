@@ -24,8 +24,5 @@ interface AsteroidDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllAsteroids(asteroids: List<Asteroid>)
 
-    //-- REMOVE * FROM asteroid WHERE closeApproachDate < TODAY
-    //-- @Delete
-    //-- suspendFun deleteAllAsteroidsBeforeToday(date: Date)
 
 }
